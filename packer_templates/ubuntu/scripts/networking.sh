@@ -10,6 +10,8 @@ network:
   version: 2
   ethernets:
     eth0:
+      match:
+        name: eth*
       dhcp4: true
 EOF
 else
