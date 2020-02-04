@@ -136,8 +136,7 @@
         "http_proxy={{user `http_proxy`}}",
         "https_proxy={{user `https_proxy`}}",
         "no_proxy={{user `no_proxy`}}",
-        "RH_USERNAME={{user `rh_username`}}",
-        "RH_PASSWORD={{user `rh_password`}}"
+        "RH_CREDS={{user `rh_creds`}}"
       ],
       "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E sh -eux '{{.Path}}'",
       "expect_disconnect": true,
@@ -149,16 +148,15 @@
         "../_common/virtualbox.sh",
         "../_common/vmware.sh",
         "../_common/parallels.sh",
-        "./scripts/unregister.sh",
         "../centos/scripts/cleanup.sh",
+        "./scripts/unregister.sh",
         "../_common/minimize.sh"
       ],
       "type": "shell"
     }
   ],
   "variables": {
-    "rh_username": null,
-    "rh_password": null,
+    "rh_creds": null,
     "arch": "64",
     "box_basename": "rhel-7.7",
     "build_timestamp": "{{isotime \"20060102150405\"}}",
