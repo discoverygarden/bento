@@ -1,9 +1,9 @@
-require "benchmark"
-require "fileutils"
-require "json"
-require "tempfile"
+require "benchmark" unless defined?(Benchmark)
+require "fileutils" unless defined?(FileUtils)
+require "json" unless defined?(JSON)
+require "tempfile" unless defined?(Tempfile)
 require "yaml"
-require "mixlib/shellout"
+require "mixlib/shellout" unless defined?(Mixlib::ShellOut)
 
 MEGABYTE = 1024.0 * 1024.0
 
@@ -21,6 +21,7 @@ module Common
     sout = Mixlib::ShellOut.new(cmd)
     sout.live_stream = STDOUT
     sout.run_command
+    sout.error! # fail hard if the cmd fails
   end
 
   def warn(msg)

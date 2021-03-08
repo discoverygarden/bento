@@ -4,7 +4,7 @@
 ntpdate -v -b 0.freebsd.pool.ntp.org
 
 # Install curl and ca_root_nss
-pkg install -y curl ca_root_nss;
+pkg install -y curl ca_root_nss dmidecode;
 
 # Emulate the ETCSYMLINK behavior of ca_root_nss; this is for FreeBSD 10,
 # where fetch(1) was massively refactored and doesn't come with
@@ -15,6 +15,8 @@ ln -sf /usr/local/share/certs/ca-root-nss.crt /etc/ssl/cert.pem;
 cat >>/etc/loader.conf << LOADER_CONF
 autoboot_delay="-1"
 beastie_disable="YES"
+loader_logo="none"
+hw.memtest.tests="0"
 LOADER_CONF
 
 # disable crash dumps

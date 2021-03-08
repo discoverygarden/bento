@@ -1,13 +1,43 @@
-execute 'run cleanmgr' do
-  command 'C:\Windows\System32\cleanmgr.exe /sagerun:10﻿'
-  ignore_failure true
-  only_if { node['kernel']['product_type'] == 'Workstaton' } # cleanmgr isn't on servers
+# OneDrive takes up 150 megs and isn't needed for testing
+windows_package 'Microsoft OneDrive' do
+  action :remove
+end
+
+# Skype takes up 26 megs
+windows_package 'Skype' do
+  action :remove
+end
+
+if windows_workstation? && !node['platform_version'].to_i == 10 # cleanmgr isn't on servers
+  # registry key locations pulled from https://github.com/spjeff/spadmin/blob/master/Cleanmgr.ps1
+  # thanks @spjeff!
+  registry_key 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Update Cleanup' do
+    values [{
+      name: 'StateFlags0001',
+      type: :dword,
+      data: 2,
+    }]
+  end
+
+  registry_key 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Temporary Files' do
+    values [{
+      name: 'StateFlags0001',
+      type: :dword,
+      data: 2,
+    }]
+  end
+
+  execute 'run cleanmgr' do
+    command 'C:\Windows\System32\cleanmgr.exe /sagerun:1'
+    ignore_failure true
+    live_stream true
+  end
 end
 
 execute 'clean SxS' do
   command 'Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase'
   ignore_failure true
-  only_if { node['platform_version'].to_f > 6.1 } # command not present on Windows 7
+  live_stream true
 end
 
 powershell_script 'remove unnecesary directories' do
@@ -16,6 +46,7 @@ powershell_script 'remove unnecesary directories' do
       "C:\\Recovery",
       "$env:localappdata\\temp\\*",
       "$env:windir\\logs",
+      "$env:windir\\temp",
       "$env:windir\\winsxs\\manifestcache",
       "C:\\Users\\vagrant\Favorites\\*"
   ) | % {
@@ -38,7 +69,7 @@ end
   end
 end
 
-# remove pagefile
+# remove pagefile. it will get created on boot next time
 registry_key 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' do
   values [{
     name: 'PagingFiles',
