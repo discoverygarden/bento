@@ -1,5 +1,5 @@
 require "bento/common"
-require "mixlib/shellout"
+require "mixlib/shellout" unless defined?(Mixlib::ShellOut)
 
 class BuildMetadata
   include Common
@@ -61,7 +61,7 @@ class BuildMetadata
 
   def version
     override_version || merged_vars.fetch("version", "#{UNKNOWN}.TIMESTAMP")
-                                   .rpartition(".").first.concat(build_timestamp.to_s)
+      .rpartition(".").first.concat(build_timestamp.to_s)
   end
 
   def packer_ver

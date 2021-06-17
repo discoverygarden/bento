@@ -25,13 +25,14 @@ end
 #### Requirements
 
 - [Packer](https://www.packer.io/)
+- [Vagrant](https://www.vagrantup.com/)
 - At least one of the following virtualization providers:
-  - [VirtualBox](https://www.virtualbox.org)
+  - [VirtualBox](https://www.virtualbox.org/)
   - [VMware Fusion](https://www.vmware.com/products/fusion.html)
-  - [VMware Workstation](https://www.vmware.com/products/workstation.html)
-  - [Parallels Desktop](http://www.parallels.com/products/desktop) also requires [Parallels Virtualization SDK](https://www.parallels.com/products/desktop/download/)
+  - [VMware Workstation](https://www.vmware.com/products/workstation-pro.html)
+  - [Parallels Desktop](https://www.parallels.com/products/desktop/) also requires [Parallels Virtualization SDK](https://www.parallels.com/products/desktop/download/)
   - [KVM](https://www.linux-kvm.org/page/Main_Page) *
-  - [Hyper-V](https://technet.microsoft.com/en-us/library/hh831531(v=ws.11).aspx) *
+  - [Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/about/) *
 
 \***NOTE:** support for these providers is considered experimental and corresponding Vagrant Cloud images may or may not exist.
 
@@ -40,38 +41,55 @@ end
 To build an Ubuntu 18.04 box for only the VirtualBox provider
 
 ```
-$ cd ubuntu
+$ cd packer_templates/ubuntu
 $ packer build -only=virtualbox-iso ubuntu-18.04-amd64.json
 ```
 
-To build Debian 10.2 32bit boxes for all possible providers (simultaneously)
+To build Debian 10.8 32bit boxes for all possible providers (simultaneously)
 
 ```
-$ cd debian
-$ packer build debian-10.2-i386.json
+$ cd packer_templates/debian
+$ packer build debian-10.8-i386.json
 ```
 
 To build CentOS 7.7 boxes for all providers except VMware and Parallels
 
 ```
-$ cd centos
+$ cd packer_templates/centos
 $ packer build -except=parallels-iso,vmware-iso centos-7.7-x86_64.json
 ```
 
 To use an alternate mirror
 
 ```
-$ cd fedora
+$ cd packer_templates/fedora
 $ packer build -var 'mirror=http://mirror.utexas.edu/fedora/linux' fedora-31-x86_64.json
 ```
 
-If the build is successful, ready to import box files will be in the `builds` directory at the root of the repository.
+To build a Windows 10 Enterprise Gen 2 box for the Hyper-V provider
+
+```
+$ cd packer_templates/windows
+$ packer build windows-10gen2.json
+```
+
+If the build is successful, your box files will be in the `builds` directory at the root of the repository.
 
 \***NOTE:** box_basename can be overridden like other Packer vars with `-var 'box_basename=ubuntu-18.04'`
 
+#### KVM/qemu support for Windows
+
+You must download [the iso image with the Windows drivers for paravirtualized KVM/qemu hardware](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso). You can do this from the command line: `wget -nv -nc https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso -O virtio-win.iso`.
+
+You can use the following sample command to build a KVM/qemu Windows box:
+
+```
+packer build --only=qemu --var virtio_win_iso=~/virtio-win.iso windows-2019.json
+```
+
 ### Proprietary Templates
 
-Templates for operating systems only available via license or subscription are also available in the repository, these include but are not limited to: macOS, Red Hat Enterprise Linux, and SUSE Linux Enterprise. As the ISOs are not publicly available the URL values will need to be overridden as appropriate. We rely on the efforts of those with access to licensed versions of the operating systems to keep these up-to-date.
+Templates for operating systems only available via license or subscription are also available in the repository, these include but are not limited to: Red Hat Enterprise Linux, and SUSE Linux Enterprise. As the ISOs are not publicly available the URL values will need to be overridden as appropriate. We rely on the efforts of those with access to licensed versions of the operating systems to keep these up-to-date.
 
 ### Networking/Firewalls
 
@@ -79,15 +97,18 @@ Most of the providers expect unrestricted access to networking in order to build
 
 #### Windows
 
-```
+```powershell
 $VS = "Standardswitch"
 $IF_ALIAS = (Get-NetAdapter -Name "vEthernet ($VS)").ifAlias
 New-NetFirewallRule -Displayname "Allow incomming from $VS" -Direction Inbound -InterfaceAlias $IF_ALIAS -Action Allow
 ```
 
-#### macOS / OSX
+#### Hyper-V Generation 2 VM's
 
-See this [wiki page](https://github.com/chef/bento/wiki/macOS)
+Hyper-V Gen 2 VMs do not support floppy drives. If you previously provided resources using a floppy drive, you must add those files to your Gen 2 iso images, in particular:
+
+- `autounattend.xml`: The Gen 2 `autounattend.xml` file supports EFI partitions. Update the `autounattend.xml` with the correct Windows version for your systems and ensure that the partitions are correct for your situation. You also need to manage the driver disk that holds the hyper-v guest services drivers and adjust the `autounattend.xml` file as appropriate.
+- `base_setup.ps1`
 
 ## Bugs and Issues
 
@@ -95,7 +116,10 @@ Please use GitHub issues to report bugs, features, or other problems.
 
 ## Related projects
 
+A huge thank you to these related projects from which we've taken inspiration and often used as a source for workarounds in complex world of base box building.
+
 * https://github.com/boxcutter
+* https://github.com/lavabit/robox
 * https://github.com/mcandre/packer-templates
 * https://github.com/timsutton/osx-vm-templates
 * https://github.com/ferventcoder/vagrant-windows-puppet/tree/master/baseboxes
@@ -103,8 +127,6 @@ Please use GitHub issues to report bugs, features, or other problems.
 ## License & Authors
 
 These basebox templates were converted from [veewee](https://github.com/jedi4ever/veewee) definitions originally based on [work done by Tim Dysinger](https://github.com/dysinger/basebox) to make "Don't Repeat Yourself" (DRY) modular baseboxes. Thanks Tim!
-
-macOS templates were adopted wholesale from [Fletcher Nichol's packer templates](https://github.com/fnichol/packer-templates).
 
 - Author: Chris McClimans ([chris@hippiehacker.org](mailto:chris@hippiehacker.org))
 - Author: Fletcher Nichol ([fnichol@nichol.ca](mailto:fnichol@nichol.ca))
@@ -118,7 +140,7 @@ macOS templates were adopted wholesale from [Fletcher Nichol's packer templates]
 - Author: Tom Duffield ([tom@chef.io](mailto:tom@chef.io))
 
 ```text
-Copyright 2012-2019, Chef Software, Inc. (<legal@chef.io>)
+Copyright 2012-2020, Chef Software, Inc. (<legal@chef.io>)
 Copyright 2011-2012, Tim Dysinger (<tim@dysinger.net>)
 
 Licensed under the Apache License, Version 2.0 (the "License");
